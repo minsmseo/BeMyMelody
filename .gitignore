@@ -1,0 +1,33 @@
+# === PYTHON BACKEND ===
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+
+# Uploaded files
+backend/uploads/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# === REACT FRONTEND ===
+
+# Node modules
+frontend/node_modules/
+
+# Build files
+frontend/build/
+frontend/dist/
+
+# Environment
+**/.env
+
+# Mac system files
+.DS_Store
