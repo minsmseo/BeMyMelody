@@ -3,7 +3,7 @@ import axios from 'axios';
 
 function App() {
   const [file, setFile] = useState(null);
-  const [result, setResult] = useState("");
+  const [chords, setChords] = useState([]);
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -21,18 +21,61 @@ function App() {
           "Content-Type": "multipart/form-data"
         }
       });
-      setResult(res.data.message + " (" + res.data.filename + ")");
+      alert("Upload completed!");
     } catch (err) {
-      setResult("업로드 실패: " + err.response?.data?.error);
+      console.error(err);
+      alert("Upload failed!");
+    }
+  };
+
+  const handleAnalyze = async () => {
+    if (!file) return alert("Please select a file.");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await axios.post("http://localhost:5000/analyze", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setChords(response.data.chords); // 분석된 코드 저장
+    } catch (error) {
+      console.error(error);
+      alert("Chord analysis failed.");
     }
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: '20px' }}>
       <h2>🎵 Upload Melody</h2>
       <input type="file" accept="audio/*" onChange={handleFileChange} />
-      <button onClick={handleUpload}>Upload</button>
-      <p>{result}</p>
+      <div style={{ marginTop: '10px' }}>
+        <button onClick={handleUpload} style={{ marginRight: '10px' }}>
+          Upload Only
+        </button>
+        <button onClick={handleAnalyze}>Analyze Chords</button>
+      </div>
+
+      {chords.length > 0 && (
+        <div style={{ marginTop: '20px' }}>
+          <h3>🎼 Chord Progression</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {chords.map((chord, index) => (
+              <span
+                key={index}
+                style={{
+                  border: '1px solid #ccc',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  backgroundColor: '#f9f9f9',
+                }}
+              >
+                {chord}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

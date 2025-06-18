@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 from werkzeug.utils import secure_filename
+import librosa
+import numpy as np
 
 app = Flask(__name__)
 CORS(app)  # React 요청 허용
@@ -38,6 +40,39 @@ def upload():
     example_chords = ['C', 'G', 'Am', 'F']
 
     return jsonify({"error": "File type not allowed"}), 400
+
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files['file']
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
+
+    try:
+        # 음원 로드
+        y, sr = librosa.load(filepath, sr=None)
+        # 코드 추출: 여기서는 피치를 기반으로 단순 루트 추정
+        chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+        chords = extract_chords(chroma)
+
+        return jsonify({"chords": chords})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def extract_chords(chroma):
+    # 크로마에서 각 시간 프레임마다 가장 강한 음을 추출
+    chord_names = ['C', 'C#', 'D', 'D#', 'E', 'F',
+                   'F#', 'G', 'G#', 'A', 'A#', 'B']
+    chords = []
+    for i in range(chroma.shape[1]):
+        strongest = np.argmax(chroma[:, i])
+        chords.append(chord_names[strongest])
+    return chords
+
+
 @app.route('/',methods=['GET'])
 def index():
     return "🎵 BeMyMelody Flask Backend is running!"
